@@ -48,3 +48,43 @@
 [DB 세팅] ▶️ 진행 중 (Docker 다운로드 중)
 [전체 파이프라인 작동 테스트] ▶️ 아직
 ```
+
+---
+
+## 크롤러 코드 구조 요약
+
+```
+📁 프로젝트 루트
+│
+├── main.py                      🔁 전체 수집 루프 실행
+├── async_data_collector.py     📡 API 요청 + 버스 데이터 수집 (비동기)
+├── async_database_manager.py   🗃️ 수집된 데이터 DB에 저장
+├── initialize_database.py      🛠️ DB 테이블/하이퍼테이블 생성
+├── make_csv_file.py            📄 저장된 DB → CSV 추출 (선택)
+│
+└── resources/                  📁 리소스 폴더
+    ├── crawlering_route_ids.json   🛣️ 수집 대상 노선 리스트
+    └── station.json                🚌 정류장 ID ↔ 이름 매핑
+```
+
+---
+
+## 🔄 실행 흐름 요약
+
+1. `main.py` 실행  
+2. → `AsyncDataCollector`가 각 노선 ID에 대해 API 요청  
+3. → 응답받은 버스 위치 + 잔여좌석 데이터 파싱  
+4. → `AsyncDatabaseManager`가 `bus_data` 테이블에 저장  
+5. → 1분 주기로 반복 수집
+
+---
+
+## ⚙️ 핵심 구성 요소 요약
+
+| 파일명 | 역할 |
+|--------|------|
+| `main.py` | 크롤러 전체 루프 제어 |
+| `async_data_collector.py` | 비동기 API 요청, 응답 파싱, 시간 처리 |
+| `async_database_manager.py` | asyncpg를 사용한 비동기 DB 저장 |
+| `initialize_database.py` | `bus_data` 테이블 + 하이퍼테이블 생성 |
+| `resources/*.json` | 노선 리스트와 정류장 정보 매핑 파일 |
