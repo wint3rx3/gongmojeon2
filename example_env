@@ -1,2 +1,0 @@
-GBUS_API_KEY=YOUR_APUI_KEY
-DB_URL=postgresql://username:password@localhost:5432/your_database
