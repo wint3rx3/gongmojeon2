@@ -1,128 +1,55 @@
-좋아요! 이 디렉토리 구조를 기준으로, 팀원에게 공유하기 좋은 형태의 **"프로젝트 파일 설명 문서"**를 아래와 같이 정리해볼게요.  
-각 파일/폴더가 어떤 역할을 하고, 내부의 주요 함수들은 어떤 기능을 하는지를 중심으로 구성했어요.
+좋아, 지금까지 너가 해온 작업들을 기반으로 전체 진행 현황과 앞으로 해야 할 작업을 정리해줄게요.  
+진행 정도도 포함해서 한눈에 딱 들어오게 표로 정리해봤어요! 👇
 
 ---
 
-# 📁 프로젝트 구조 및 파일 설명서
+## ✅ 프로젝트 전체 진행 현황
 
-이 프로젝트는 **경기도 광역버스의 실시간 잔여 좌석 데이터를 수집하고, DB에 저장하여 분석 및 예측에 활용**하기 위한 비동기 크롤러 시스템입니다.
-
----
-
-## 📂 resources/  
-API 호출 시 필요한 리소스(JSON)들을 담은 폴더입니다.
-
-### ▸ `crawlering_route_ids.json`
-- 수집 대상 `route_id`와 `route_name`을 리스트 형태로 정의한 파일
-- 예: `[["233000031", "9302"], ["219000026", "9700"]]`
-- `AsyncDataCollector`에서 이 파일을 참조하여 반복적으로 크롤링을 수행합니다.
-
-### ▸ `station.json`
-- 정류장 ID → 정류장 이름 매핑 정보
-- API 응답에서 받은 정류장 ID를 사람이 알아보기 쉽게 이름으로 바꾸기 위해 사용됩니다.
+| 단계 | 내용 | 진행 상태 | 비고 |
+|------|------|-----------|------|
+| 1️⃣ 가상환경 생성 | `venv`로 Python 가상환경 구성 | ✅ 완료 | `python -m venv venv`로 성공 |
+| 2️⃣ 패키지 설치 | 필요 패키지 수동 설치 (aiohttp, asyncpg 등) | ✅ 완료 | 일부는 실행하면서 확인 예정 |
+| 3️⃣ 주요 코드 구성 | `main.py`, `collector`, `DB manager` 완성 | ✅ 완료 | 레퍼런스 기반으로 구조화 완료 |
+| 4️⃣ API 테스트 | 버스 위치정보 API 호출 테스트 | ✅ 성공 | 인증키 및 URL 문제 해결 |
+| 5️⃣ `.env` 구성 | 환경변수 적용 | ✅ 완료 | API key + DB URL 구조 이해 |
+| 6️⃣ 데이터 크롤링 로직 | 비동기 방식 구현 완료 | ✅ 완료 | `AsyncDataCollector`로 구조화 |
+| 7️⃣ DB 연동 준비 | 아직 TimescaleDB 미구축 | ⏳ 진행 중 | Docker 다운로드 중 |
+| 8️⃣ DB 테이블 생성 | `initialize_database.py` 실행 예정 | ❌ 미완료 | DB 붙은 후 바로 실행 가능 |
+| 9️⃣ 실시간 수집 실행 | `main.py` 통한 주기적 수집 | ❌ 테스트 필요 | DB 연결되면 검증 가능 |
+| 🔟 CSV 출력 테스트 | `make_csv_file.py`로 데이터 저장 | ❌ 미완료 | DB 연결되면 추출 가능 |
 
 ---
 
-## 📂 utils/  
-보조 기능 유틸리티 코드가 위치한 폴더입니다.
+## 🧩 앞으로 해야 할 작업 (우선순위 순)
 
-### ▸ `make_csv_file.py`
-- 목적: **DB에 저장된 수집 데이터를 CSV 파일로 export**
-- 주 용도:
-  - 모델 학습 전 데이터 추출
-  - 분석용 데이터 저장
-- 주요 함수:
-  - 없음 (단일 실행 스크립트 형태로, 실행 시 전체 데이터 CSV로 저장)
+1. **Docker 설치 완료**  
+   → TimescaleDB 띄울 준비
 
----
+2. **TimescaleDB 컨테이너 실행**  
+   → `docker run ...` 명령어로 실행  
+   → `.env`의 `DB_URL` 값 설정
 
-## 📄 .env  
-- 환경변수 파일 (절대 Git에 올리지 말 것!)
-- 예시 키:
-  - `GBUS_API_KEY` : 경기버스 정보 Open API 인증키
-  - `DB_URL` : PostgreSQL/TimescaleDB 접속 URL
+3. **초기화 스크립트 실행**  
+   → `python initialize_database.py`  
+   → 테이블 + 하이퍼테이블 생성 확인
 
----
+4. **`main.py` 실행 테스트**  
+   → 실시간 수집 및 DB 저장 확인  
+   → 응답 데이터 수, 저장 로그 확인
 
-## 📄 async_data_collector.py  
-- 비동기로 API를 호출해 **버스의 위치 및 좌석 정보를 수집하는 핵심 로직**
-- 주요 클래스: `AsyncDataCollector`
+5. **CSV로 결과 추출** (선택)  
+   → `make_csv_file.py` 실행  
+   → 저장된 데이터 확인 및 활용
 
-### 주요 메서드
-- `fetch_data(route_id, route_name)`  
-  : 단일 노선 ID에 대한 API 요청 및 결과 파싱  
-- `collect_data()`  
-  : 전체 노선 리스트에 대해 병렬로 `fetch_data` 수행  
-- `open()` / `close()`  
-  : `aiohttp.ClientSession` 열기/닫기
+6. (선택) **모델 학습 파이프라인 설계 시작**  
+   → 예측 목적에 맞춘 데이터 전처리/모델 설계 가능
 
 ---
 
-## 📄 async_database_manager.py  
-- 수집된 데이터를 PostgreSQL/TimescaleDB에 저장하는 모듈
-- 주요 클래스: `AsyncDatabaseManager`
+## 🧭 지금 상태는?
 
-### 주요 메서드
-- `connect()` : DB 연결 (필요할 때만 실행)
-- `save_data(buses)` : 수집된 버스 리스트를 `bus_data` 테이블에 일괄 저장
-- `close()` : DB 연결 종료
-
----
-
-## 📄 initialize_database.py  
-- DB에 필요한 테이블 및 TimescaleDB의 하이퍼테이블을 **초기 1회 생성**하는 스크립트
-
-### 주요 함수
-- `create_tables()` : `bus_data` 테이블 생성
-- `create_hypertable()` : TimescaleDB 하이퍼테이블로 등록
-- `insert_test()` : 테스트 데이터 삽입 (선택 사항)
-
-📌 **`main.py` 실행 전에 한 번만 실행해주면 됩니다.**
-
----
-
-## 📄 main.py  
-- **실제 크롤러를 주기적으로 실행하는 진입점**
-- `AsyncDataCollector`, `AsyncDatabaseManager`를 사용해
-  - 실시간으로 API 데이터를 수집하고
-  - DB에 저장하며
-  - 60초 주기로 반복 실행합니다.
-
-### 핵심 로직
-- `.env` 로딩
-- `base_url` 구성
-- 무한 루프 내에서:
-  - `collect_data()` 호출 → `save_data()` 저장 → sleep 60초
-
----
-
-## 📄 requirements.txt  
-- 프로젝트 실행에 필요한 패키지 목록  
-- 예시 항목:
-  - `aiohttp`
-  - `asyncpg`
-  - `psycopg2`
-  - `python-dotenv`
-  - `pandas`
-
-```txt
-aiohttp
-asyncpg
-psycopg2
-python-dotenv
-pandas
+```text
+[환경 구축 및 코드 준비] ▶️ 완료
+[DB 세팅] ▶️ 진행 중 (Docker 다운로드 중)
+[전체 파이프라인 작동 테스트] ▶️ 아직
 ```
-
----
-
-## ✅ 프로젝트 시작 전 체크리스트
-
-1. `.env` 파일 작성
-2. `initialize_database.py` 1회 실행 → 테이블/하이퍼테이블 생성
-3. `resources/` 폴더에 JSON 파일 존재 확인
-4. `main.py` 실행으로 실시간 수집 시작
-
----
-
-필요시 이 문서를 `README.md`나 `docs/overview.md`로 저장해서 팀에 공유하면 좋아요!  
-또, 향후 시각화, 모델 학습, API 서비스 확장 등으로 넘어가도 **기초 구조가 탄탄**해서 매우 좋습니다 😊
