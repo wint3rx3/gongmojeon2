@@ -14,7 +14,7 @@ async def main():
     dsn = os.getenv("DB_URL")
 
     # 요청 URL 템플릿 설정
-    base_url = f"http://openapi.gbis.go.kr/ws/rest/buslocationservice?serviceKey={api_key}&routeId={{}}"
+    base_url = f"http://apis.data.go.kr/6410000/buslocationservice/v2/getBusLocationListv2?serviceKey={api_key}&routeId={{}}&format=xml"
 
     # 리소스 경로 (노선 목록 json 등)
     resource_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources")
