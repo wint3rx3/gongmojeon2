@@ -71,7 +71,7 @@ python initialize_database.py
 크롤링 테스트를 위한 설정 (main_copy.py)
 
 ```bash
-python main_copy.py
+python main_test.py
 ```
 전체 버전 실행 (main.py)
 
