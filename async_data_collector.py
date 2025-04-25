@@ -16,63 +16,61 @@ class AsyncDataCollector:
         self.session = aiohttp.ClientSession()  # aiohttp 세션 객체 생성
         
         # 정류장 ID -> 이름 매핑 데이터 로드
-        with open(f"{self.resources_path}/station.json", "r") as f:
+        with open(f"{self.resources_path}/station.json", "r", encoding="utf-8") as f:
             self.station_map = json.load(f)
 
         # 수집 대상 노선 리스트 (route_id, route_name 쌍)
-        with open(f"{self.resources_path}/crawlering_route_ids.json", "r") as f:
+        with open(f"{self.resources_path}/crawlering_route_ids.json", "r", encoding="utf-8") as f:
             self.route_ids = json.load(f)
 
     async def fetch_data(self, route_id, route_name):
         buses = []
-        url = self.base_url.format(route_id)  # 해당 노선의 API URL 생성
-        async with self.session.get(url) as response:
-            xml_str = await response.text()  # 응답을 문자열(XML)로 읽기
-            xml_element = ET.fromstring(xml_str)  # XML 파싱
-            json_data = xmljson.parker.data(xml_element)  # XML → JSON 형태로 변환
+        url = self.base_url.format(route_id)
+        try:
+            async with self.session.get(url) as response:
+                xml_str = await response.text()
 
-            # 응답 본문 또는 위치 목록이 없는 경우 예외 처리
-            if 'msgBody' not in json_data or 'busLocationList' not in json_data['msgBody']:
-                logging.warning(f"No busLocationList found in the response for route_id {route_id}")
-                return buses
-            
-            bus_locations = json_data["msgBody"]["busLocationList"]
+                # XML 응답 검증
+                if not xml_str.strip().startswith("<?xml"):
+                    logging.error(f"⚠️ 잘못된 XML 응답 - route_id={route_id}, 응답: {xml_str[:100]}")
+                    return buses  # 빈 리스트 반환해서 collect_data()가 무시하게 됨
 
-            # 단일 객체인 경우 예외 처리
-            if not isinstance(bus_locations, list):
-                logging.error(f"Unexpected busLocationList type for route_id {route_id}: {type(bus_locations)}")
-                return buses
-            
-            # 응답 코드가 0이 아니면 무효 처리
-            if json_data["msgHeader"]["resultCode"] != 0:
-                logging.warning(f"Request ignored or result is unexpected: {json_data}")
-                return buses
+                # XML → JSON 파싱
+                xml_element = ET.fromstring(xml_str)
+                json_data = xmljson.parker.data(xml_element)
 
-            # 각 버스 정보를 순회하며 필요한 항목 추출
-            for data in bus_locations:
-                # 현재 시간 기준으로 타임스탬프 생성 (한국 시간)
+                if 'msgBody' not in json_data or 'busLocationList' not in json_data['msgBody']:
+                    logging.warning(f"No busLocationList found in the response for route_id {route_id}")
+                    return buses
+
+                bus_locations = json_data["msgBody"]["busLocationList"]
+
+                if not isinstance(bus_locations, list):
+                    logging.error(f"Unexpected busLocationList type for route_id {route_id}: {type(bus_locations)}")
+                    return buses
+
+                if json_data["msgHeader"]["resultCode"] != 0:
+                    logging.warning(f"API resultCode is not 0 for route_id {route_id}")
+                    return buses
+
+                # 유효한 응답이면 파싱 시작
                 time_str = datetime.now(pytz.utc).astimezone(self.kst_zone).strftime("%Y-%m-%d %H:%M:%S")
                 time = datetime.strptime(time_str, "%Y-%m-%d %H:%M:%S")
 
-                # 버스 정보 파싱
-                plate_no = data.get("plateNo")  # 차량 번호
-                plate_type = data.get("plateType")  # 차량 종류 (사용하지 않음)
-                remain_seat_cnt = data.get("remainSeatCnt", -1)  # 잔여 좌석 수
-                station_id = str(data.get("stationId"))  # 정류장 ID
-                station_name = self.station_map.get(str(station_id), "Unknown Station")  # 정류장 이름
-                station_seq = data.get("stationSeq")  # 정류장 순번
-                
-                # 하나의 버스 데이터를 딕셔너리로 저장
-                buses.append({
-                    "time": time,
-                    "plate_no": plate_no,
-                    "remain_seat_cnt": remain_seat_cnt,
-                    "route_id": route_id,
-                    "route_name": route_name,
-                    "station_id": station_id,
-                    "station_name": station_name,
-                    "station_seq": station_seq
-                })
+                for data in bus_locations:
+                    buses.append({
+                        "time": time,
+                        "plate_no": data.get("plateNo"),
+                        "remain_seat_cnt": data.get("remainSeatCnt", -1),
+                        "route_id": route_id,
+                        "route_name": route_name,
+                        "station_id": str(data.get("stationId")),
+                        "station_name": self.station_map.get(str(data.get("stationId")), "Unknown Station"),
+                        "station_seq": data.get("stationSeq")
+                    })
+
+        except Exception as e:
+            logging.error(f"🚨 fetch_data() 예외: route_id={route_id}, error={e}")
 
         return buses
 
