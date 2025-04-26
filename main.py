@@ -1,49 +1,75 @@
 import asyncio
 import os
+import logging
 import time
+from datetime import datetime
 from dotenv import load_dotenv
 
 from async_data_collector import AsyncDataCollector
 from async_database_manager import AsyncDatabaseManager
 
+# ✅ 로그 설정
+os.makedirs("logs", exist_ok=True)
+logging.basicConfig(
+    filename="logs/data_collector.log",
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s"
+)
 
 async def main():
     # 환경 변수 로딩
     load_dotenv()
-    api_key = os.getenv("GBUS_API_KEY")
+    api_keys = os.getenv("API_KEY").split(",")
     dsn = os.getenv("DB_URL")
 
-    # 요청 URL 템플릿 설정
-    base_url = f"http://apis.data.go.kr/6410000/buslocationservice/v2/getBusLocationListv2?serviceKey={api_key}&routeId={{}}&format=xml"
-
-    # 리소스 경로 (노선 목록 json 등)
     resource_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "resources")
-
-    # 수집기, DB 매니저 준비
-    data_collector = AsyncDataCollector(base_url, resource_path)
     database_manager = AsyncDatabaseManager(dsn)
 
-    # aiohttp 세션 열기
-    await data_collector.open()
+    key_index = 0
 
     while True:
         start_time = time.time()
+        success = False
 
-        # 데이터 수집
-        buses = await data_collector.collect_data()
+        for attempt in range(len(api_keys)):
+            current_key = api_keys[key_index % len(api_keys)]
+            key_index += 1
 
-        if buses:
-            print("✅ 데이터 수집 완료. DB 저장 중...")
-            await database_manager.save_data(buses)
-            print(f"✅ {len(buses)}건 저장 완료")
-        else:
-            print("⚠️ 수집된 데이터 없음")
+            base_url = f"http://apis.data.go.kr/6410000/buslocationservice/v2/getBusLocationListv2?serviceKey={current_key}&routeId={{}}&format=xml"
+
+            try:
+                data_collector = AsyncDataCollector(base_url, resource_path)
+                await data_collector.open()
+                buses = await data_collector.collect_data()
+
+                total_routes = len(data_collector.route_ids)
+                total_buses = len(buses)
+
+                if buses:
+                    print(f"✅ API 키 {current_key} 사용: 데이터 수집 성공. DB 저장 중...")
+                    await database_manager.save_data(buses)
+                    print(f"✅ {total_buses}건 저장 완료")
+                    logging.info(f"✅ 수집 성공 - 키: {current_key}, 노선 수: {total_routes}, 저장 건수: {total_buses}")
+                else:
+                    print(f"⚠️ API 키 {current_key} 사용: 수집된 데이터 없음")
+                    logging.warning(f"⚠️ 수집된 데이터 없음 - 키: {current_key}, 노선 수: {total_routes}")
+
+                success = True
+                break
+
+            except Exception as e:
+                print(f"🚨 API 키 {current_key} 실패 → 다음 키 시도: {e}")
+                logging.error(f"🚨 API 키 실패 - {current_key}: {e}")
+
+        if not success:
+            print("❌ 모든 API 키 시도 실패. 다음 루프까지 대기...")
+            logging.error("❌ 모든 API 키 시도 실패")
 
         elapsed = time.time() - start_time
         print(f"🕒 총 소요 시간: {elapsed:.2f}초\n")
+        logging.info(f"🕒 총 수집 소요 시간: {elapsed:.2f}초\n")
 
         await asyncio.sleep(60)
-
 
 if __name__ == "__main__":
     asyncio.run(main())
