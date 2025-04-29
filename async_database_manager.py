@@ -27,7 +27,7 @@ class AsyncDatabaseManager:
                     # 수집된 각 버스 데이터를 튜플로 변환
                     (
                         bus['time'],
-                        bus['plate_no'],
+                        bus['plate_no'], 
                         bus['route_id'],
                         bus['route_name'],
                         bus['remain_seat_cnt'],
