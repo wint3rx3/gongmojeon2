@@ -90,4 +90,4 @@ class AsyncDataCollector:
 
     async def close(self):
         # 세션 종료
-        await self.session.close()
+        await self.session.close() 
