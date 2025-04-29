@@ -12,4 +12,4 @@ conn = psycopg2.connect(dsn)
 
 # 쿼리 → DataFrame → CSV 저장
 df = pd.read_sql_query("SELECT * FROM bus_data", conn)
-df.to_csv('./data/bus_data.csv', index=False)
+df.to_csv('./datas/bus_data.csv', index=False)
