@@ -65,7 +65,7 @@ def main():
     load_dotenv()  # .env 파일에서 환경변수 로드
     dsn = os.getenv("DB_URL")  # DB 연결 문자열 가져오기
     conn = psycopg2.connect(dsn)  # PostgreSQL 연결
-    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)  # 자동 커밋 설정
+    conn.set_isolation_level(ISOLATION_LEVEL_AUTOCOMMIT)  # 자동 커밋 설정 
     
     with conn.cursor() as cursor:
         create_tables(cursor)         # 테이블 생성 (있으면 삭제 후 생성)
@@ -73,7 +73,7 @@ def main():
         insert_test(cursor, conn)     # 테스트용 데이터 삽입
         
     conn.close()  # 연결 종료
-    print("Hyper Table initialized successfully.")  # 완료 메시지
+    print("✅ DB 초기화 완료")  # 완료 메시지
 
 if __name__ == "__main__":
     main()  # 메인 함수 실행
