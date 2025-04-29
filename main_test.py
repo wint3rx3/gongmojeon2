@@ -48,22 +48,22 @@ async def main():
 
                 if buses:
                     await database_manager.save_data(buses)
-                    print(f"[{loop_time}] 수집 성공 - 노선 수: {total_routes}, 저장 건수: {total_buses}")
-                    logging.info(f"[{loop_time}] 수집 성공 - 노선 수: {total_routes}, 저장 건수: {total_buses}")
-                else:
-                    print(f"[{loop_time}] 수집된 데이터 없음")
-                    logging.warning(f"수집된 데이터 없음 - 노선 수: {total_routes}")
+                    print(f"✅ [{loop_time}] 수집 성공 - 노선 수: {total_routes}, 저장 건수: {total_buses}")
+                    logging.info(f"✅ [{loop_time}] 수집 성공 - 노선 수: {total_routes}, 저장 건수: {total_buses}")
+                else: 
+                    print(f"❌ [{loop_time}] 수집된 데이터 없음")
+                    logging.warning(f"❌ 수집된 데이터 없음 - 노선 수: {total_routes}")
 
                 success = True
                 break
 
             except Exception as e:
-                print(f"[{loop_time}] API 키 실패 → 다음 키 시도")
-                logging.error(f"API 키 실패: {e}")
+                print(f"❌ [{loop_time}] API 키 실패 → 다음 키 시도")
+                logging.error(f"❌ API 키 실패: {e}")
 
         if not success:
-            print(f"[{loop_time}] 모든 API 키 시도 실패. 다음 루프까지 대기...")
-            logging.error("모든 API 키 시도 실패")
+            print(f"❌ [{loop_time}] 모든 API 키 시도 실패. 다음 루프까지 대기...")
+            logging.error("❌ 모든 API 키 시도 실패")
 
         await asyncio.sleep(60)
 
