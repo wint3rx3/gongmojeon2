@@ -8,16 +8,16 @@ from dotenv import load_dotenv
 from async_data_collector import AsyncDataCollector
 from async_database_manager import AsyncDatabaseManager
 
-# ✅ 로그 설정
+# 로그 설정
 os.makedirs("logs", exist_ok=True)
 logging.basicConfig(
     filename="logs/data_collector.log",
     level=logging.INFO,
-    format="%(asctime)s [%(levelname)s] %(message)s"
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    encoding="utf-8"
 )
 
 async def main():
-    # 환경 변수 로딩
     load_dotenv()
     api_keys = os.getenv("API_KEY").split(",")
     dsn = os.getenv("DB_URL")
@@ -28,6 +28,7 @@ async def main():
     key_index = 0
 
     while True:
+        loop_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         start_time = time.time()
         success = False
 
@@ -46,28 +47,23 @@ async def main():
                 total_buses = len(buses)
 
                 if buses:
-                    print(f"✅ 데이터 수집 성공. DB 저장 중...")
                     await database_manager.save_data(buses)
-                    print(f"✅ {total_buses}건 저장 완료")
-                    logging.info(f"✅ 수집 성공 - 키: {current_key}, 노선 수: {total_routes}, 저장 건수: {total_buses}")
+                    print(f"[{loop_time}] 수집 성공 - 노선 수: {total_routes}, 저장 건수: {total_buses}")
+                    logging.info(f"[{loop_time}] 수집 성공 - 노선 수: {total_routes}, 저장 건수: {total_buses}")
                 else:
-                    print(f"⚠️ 수집된 데이터 없음")
-                    logging.warning(f"⚠️ 수집된 데이터 없음 - 키: {current_key}, 노선 수: {total_routes}")
+                    print(f"[{loop_time}] 수집된 데이터 없음")
+                    logging.warning(f"수집된 데이터 없음 - 노선 수: {total_routes}")
 
                 success = True
                 break
 
             except Exception as e:
-                print(f"🚨 API 키 실패 → 다음 키 시도: {e}")
-                logging.error(f"🚨 API 키 실패: {e}")
+                print(f"[{loop_time}] API 키 실패 → 다음 키 시도")
+                logging.error(f"API 키 실패: {e}")
 
         if not success:
-            print("❌ 모든 API 키 시도 실패. 다음 루프까지 대기...")
-            logging.error("❌ 모든 API 키 시도 실패")
-
-        elapsed = time.time() - start_time
-        print(f"🕒 총 소요 시간: {elapsed:.2f}초\n")
-        logging.info(f"🕒 총 수집 소요 시간: {elapsed:.2f}초\n")
+            print(f"[{loop_time}] 모든 API 키 시도 실패. 다음 루프까지 대기...")
+            logging.error("모든 API 키 시도 실패")
 
         await asyncio.sleep(60)
 
