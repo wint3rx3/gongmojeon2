@@ -17,6 +17,10 @@ python -m venv venv
 # macOS / Linux
 source venv/bin/activate
 ```
+이미 가상환경 세팅을 끝냈다면,
+```
+.\venv\Scripts\activate
+```
 
 ### 2. 필요한 라이브러리 설치
 아래 명령어로 모든 라이브러리를 설치
@@ -53,7 +57,7 @@ DB_URL=postgresql://postgres:your_password@localhost:5432/your_db_name
 API 신청 후, .env 파일에 다음처럼 추가
 
 ```ini
-GBUS_API_KEY=여기에_발급받은_API_KEY
+API_KEY=여기에_발급받은_API_KEY
 ```
 
 ### 5. DB 초기화
@@ -68,15 +72,15 @@ python initialize_database.py
 - 테스트용 샘플 데이터 삽입
 
 ### 6. 데이터 수집 테스트
-크롤링 테스트를 위한 설정 (main_copy.py)
+테스트 코드 (main_copy.py)
 
 ```bash
 python main_test.py
 ```
-전체 버전 실행 (main.py)
+출퇴근 시간 자동 크롤링 설정 (main.py)
 
 ```bash
-python main.py
+python main_timer.py
 ```
 
 ### 7. 수집된 데이터 확인
