@@ -1,3 +1,27 @@
+## 🗂️ 파일 디렉토리 구조
+```
+project_root/
+├── data/
+│   └── bus_data.csv                   # 수집된 버스 정보 데이터를 저장한 CSV 파일
+├── logs/
+│   └── data_collector.log            # 데이터 수집 실행 중 발생한 로그 기록
+├── resources/
+│   ├── all_route_ids.json            # 모든 버스 노선 ID 정보
+│   ├── crawlering_route_ids.json     # 수집 대상 버스 노선 ID 목록
+│   └── station.json                  # 버스 정류장 관련 메타데이터
+├── venv/                             # Python 가상환경 디렉토리 (보통 Git에서 제외)
+├── .env                              # API 키 등 환경변수 설정 파일
+├── async_data_collector.py           # 비동기 방식으로 버스 데이터를 수집하는 모듈
+├── async_database_manager.py         # 비동기 데이터베이스 입출력 처리 모듈
+├── initialize_database.py            # 데이터베이스 초기화 및 테이블 생성 스크립트
+├── main_test.py                      # 테스트용 실행 파일 (기능별 모듈 검증 목적)
+├── main_timer.py                     # 일정 주기로 데이터 수집을 수행하는 메인 실행 파일
+├── make_csv.py                       # 수집된 데이터를 CSV 형식으로 변환 및 저장하는 스크립트
+├── README.md                         # 프로젝트 소개 및 실행 방법 설명 문서
+├── requirements.txt                  # 필요한 Python 패키지 목록
+```
+
+## ⚡ 퀵 스타트
 ### 1. Python 가상환경 설정 (venv)
 가상환경 생성
 
