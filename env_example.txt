@@ -1,0 +1,2 @@
+API_KEY=""
+DB_URL=postgresql://postgres:pass1234@localhost:5432/busdb
